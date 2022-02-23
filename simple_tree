@@ -1,0 +1,73 @@
+#pragma once
+
+#include <vector>
+#include <string>
+class gltfModel;
+
+class simple_node
+{
+public:
+	simple_node* left_child;
+	simple_node* right_brother;
+	simple_node* parent;
+	//gltfModel* model;
+	std::string name;
+	simple_node()
+	{
+		left_child = nullptr;
+		right_brother = nullptr;
+		parent = nullptr;
+	}
+	simple_node(simple_node* parentNode, std::string strName)
+	{
+		left_child = nullptr;
+		right_brother = nullptr;
+		name = strName;
+
+		parent = parentNode;
+		if (parentNode->left_child == nullptr)
+		{
+			parentNode->left_child = this;
+		}
+		else
+		{
+			simple_node* child = parentNode->left_child;
+			while (child->right_brother != nullptr)
+			{
+				child = child->right_brother;
+			}
+			child->right_brother = this;
+		}
+	}
+};
+
+class simple_tree
+{
+	void DestroyNode(simple_node* node)
+	{
+		if (node == nullptr) return;
+
+		simple_node* leftChildNode = node->left_child;
+		DestroyNode(leftChildNode);
+
+		simple_node* brotherNode = node->right_brother;
+		DestroyNode(brotherNode);
+
+		printf("delete %s\n", node->name.c_str());
+		delete node;
+	}
+
+public:
+	//记录第一层的节点
+	//std::vector<simple_node*> roots;
+	simple_node* root;
+
+	simple_tree() {
+		root = new simple_node;
+		root->name = "root";
+	}
+	~simple_tree()
+	{
+		DestroyNode(root);
+	}
+};
