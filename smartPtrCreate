@@ -1,0 +1,48 @@
+#include <map>
+#include <string>
+#include <memory>
+#include <iostream>
+
+using namespace std;
+
+struct logic_t {
+
+};
+
+struct node_t {
+	float							pos[3];
+	float							scale;
+	float							rot[4];
+	string							name;
+	logic_t							logic_data;
+	//map<string, weak_ptr<node_t>>	child_nodes;
+	map<string, shared_ptr<node_t>>	child_nodes;
+};
+
+
+int main()
+{
+	node_t rootNodeA;
+	rootNodeA.name = "A";
+
+	//shared_ptr<node_t> pNodeB(new node_t());
+	auto pNodeB = std::make_shared<node_t>();	pNodeB->name = "B";
+	auto pNodeC = std::make_shared<node_t>();	pNodeC->name = "C";
+
+	rootNodeA.child_nodes.insert(std::make_pair(pNodeB->name, pNodeB));
+	rootNodeA.child_nodes.insert(std::make_pair(pNodeC->name, pNodeC));
+
+	auto pNodeD = std::make_shared<node_t>();	pNodeD->name = "D";
+	auto pNodeE = std::make_shared<node_t>();	pNodeE->name = "E";
+	auto pNodeF = std::make_shared<node_t>();	pNodeF->name = "F";
+	
+	pNodeB->child_nodes.insert(std::make_pair(pNodeD->name, pNodeD));
+	pNodeB->child_nodes.insert(std::make_pair(pNodeE->name, pNodeE));
+	pNodeB->child_nodes.insert(std::make_pair(pNodeF->name, pNodeF));
+	
+
+
+
+
+    std::cout << "Hello World!\n";
+}
