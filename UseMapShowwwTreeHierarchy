@@ -1,0 +1,40 @@
+    if (node.expired()) return;
+    auto spNode = node.lock(); 
+    
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowItemOverlap;
+    if (node.lock().get() == selectnode.lock().get())   //lz  warning我暂时只想到这种比较方法
+        flags |= ImGuiTreeNodeFlags_Selected;
+
+    auto it = spNode->child_nodes.begin();
+    if (it == spNode->child_nodes.end())
+        flags |= ImGuiTreeNodeFlags_Leaf;
+
+    if (ImGui::TreeNodeEx(spNode->name.c_str(), flags))
+    {
+        ////点击
+        //if (ImGuiHelper::IsItemSelected())
+        //{
+        //    selectnode = spNode;
+        //}
+
+        ////拖拽 释放
+        //if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        //{
+        //    hovernode = spNode;
+        //}
+
+        //遍历
+        if (it != spNode->child_nodes.end())
+        {
+            ImGuiInsertTreeNode(it->second);
+
+            ++it;
+            while (it != spNode->child_nodes.end())
+            {
+                ImGuiInsertTreeNode(it->second);
+                ++it;
+            }
+        }
+
+        ImGui::TreePop();
+    }
