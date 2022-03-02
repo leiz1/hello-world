@@ -5,44 +5,73 @@
 
 using namespace std;
 
-struct logic_t {
+struct logic_t{
 
 };
 
-struct node_t {
-	float							pos[3];
-	float							scale;
-	float							rot[4];
-	string							name;
-	logic_t							logic_data;
-	//map<string, weak_ptr<node_t>>	child_nodes;
-	map<string, shared_ptr<node_t>>	child_nodes;
-};
-
-
-int main()
+struct node_t
 {
-	node_t rootNodeA;
-	rootNodeA.name = "A";
+public:
+	float			pos[3];
+	float			scale;		//建议统一缩放
+	float			rotate[3];
+	std::string		name;
+	logic_t			logic_data;
+	std::weak_ptr<node_t>							parent_node;
+	std::map<std::string, std::weak_ptr<node_t>>	child_nodes;
+	~node_t()
+	{
+		std::cout << "~node_t" << this << " " << name << std::endl;
+	}
+};
 
-	//shared_ptr<node_t> pNodeB(new node_t());
-	auto pNodeB = std::make_shared<node_t>();	pNodeB->name = "B";
-	auto pNodeC = std::make_shared<node_t>();	pNodeC->name = "C";
+class NodeFactory
+{
+	NodeFactory() {};
+	~NodeFactory() {/**/ };
 
-	rootNodeA.child_nodes.insert(std::make_pair(pNodeB->name, pNodeB));
-	rootNodeA.child_nodes.insert(std::make_pair(pNodeC->name, pNodeC));
+	std::vector< std::shared_ptr<node_t> > nodeManager;
+	std::shared_ptr<node_t> root;
 
-	auto pNodeD = std::make_shared<node_t>();	pNodeD->name = "D";
-	auto pNodeE = std::make_shared<node_t>();	pNodeE->name = "E";
-	auto pNodeF = std::make_shared<node_t>();	pNodeF->name = "F";
-	
-	pNodeB->child_nodes.insert(std::make_pair(pNodeD->name, pNodeD));
-	pNodeB->child_nodes.insert(std::make_pair(pNodeE->name, pNodeE));
-	pNodeB->child_nodes.insert(std::make_pair(pNodeF->name, pNodeF));
-	
+public:
+	static NodeFactory* getInstance()
+	{
+		static NodeFactory instance;
+		return &instance;
+	}
 
+	void Init()
+	{
+		root = std::make_shared<node_t>();
+		root->name = "root";
+	}
 
+	void CreateNode(std::weak_ptr<node_t>& parent, std::string strName)
+	{
+		//add to node managet(shared ptr!)
+		nodeManager.push_back(std::make_shared<node_t>());
 
+		//set property
+		std::weak_ptr<node_t> wpNode = nodeManager.back();
+		auto spNode = wpNode.lock();
+		spNode->name = strName;
 
-    std::cout << "Hello World!\n";
-}
+		//set child
+		bool bExpired = parent.expired();
+		if (bExpired == false)
+		{
+			auto spParent = parent.lock();
+			spParent->child_nodes[strName] = wpNode;
+		}
+
+		//set parent（ relative data ）
+		spNode->parent_node = parent;
+	}
+
+	std::weak_ptr<node_t> GetRootNode()
+	{
+		std::weak_ptr<node_t> wpRootNode = root;
+		return wpRootNode;
+	}
+
+};
