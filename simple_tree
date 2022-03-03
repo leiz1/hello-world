@@ -71,3 +71,35 @@ public:
 		DestroyNode(root);
 	}
 };
+
+//#define test_deconstruct
+#ifdef test_deconstruct
+    static int nCount = 0;      //节点必须设置一个标记，这里使用Count，比如A0,A1，否则会打开同一个节点（ImGui的问题）
+    simple_node* Node_A = new simple_node(tree->root, "A", nCount);
+    simple_node* Node_B = new simple_node(Node_A, "B", nCount);
+    simple_node* Node_C = new simple_node(Node_A, "C", nCount);
+    simple_node* Node_D = new simple_node(Node_A, "D", nCount);
+
+    simple_node* Node_E = new simple_node(Node_B, "E", nCount);
+    simple_node* Node_F = new simple_node(Node_B, "F", nCount);
+
+    simple_node* Node_K = new simple_node(Node_E, "K", nCount);
+    simple_node* Node_L = new simple_node(Node_E, "L", nCount);
+
+    simple_node* Node_G = new simple_node(Node_C, "G", nCount);
+
+    simple_node* Node_H = new simple_node(Node_D, "H", nCount);
+    simple_node* Node_I = new simple_node(Node_D, "I", nCount);
+    simple_node* Node_J = new simple_node(Node_D, "J", nCount);
+
+    simple_node* Node_M = new simple_node(Node_H, "M", nCount);
+    nCount++;
+
+    //         A
+    //     /   |   \
+    //    B    C     D
+    //   /\    |   / | \
+    //  E F    G   H I J
+    // /\          |
+    //K L          M
+#endif
