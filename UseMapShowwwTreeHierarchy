@@ -26,9 +26,6 @@
         //遍历
         if (it != spNode->child_nodes.end())
         {
-            ImGuiInsertTreeNode(it->second);
-
-            ++it;
             while (it != spNode->child_nodes.end())
             {
                 ImGuiInsertTreeNode(it->second);
