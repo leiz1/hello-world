@@ -1,0 +1,156 @@
+	//拾取
+	void NodeEditor::Pickup()
+	{
+		//拣选操作
+		//点击事件那一帧， 相机发出射线，	和场景中每个三角形进行相交检测...
+
+		POINT p;
+		GetCursorPos(&p);
+		ScreenToClient(m_dxhwnd, &p);
+
+		DWORD	SCREEN_WIDTH = GetMainWindowWidth();	
+		DWORD	SCREEN_HEIGHT = GetMainWindowHeight();	
+
+		auto w_ratio = ((float)p.x / (float)SCREEN_WIDTH);
+		auto h_ratio = ((float)p.y / (float)SCREEN_HEIGHT);
+		Echo::Ray ray = Get<GameWorld>()->GetCamera()->getCameraToViewportRay(w_ratio, h_ratio);
+
+		TempRenderGeom.DrawLine(EchoVecToGxVec(ray.getOrigin()), EchoVecToGxVec(ray.getOrigin() + ray.getDirection() * 10.0f), 0xffff0000);
+
+#define TriangleTest
+#ifdef TriangleTest
+
+		static GxVec3 vertex[] = {
+			{-1.f, 1.f, 1.f},
+			{-1.f, 1.f, -1.f},
+			{1.f, 1.f, -1.f},
+			{1.f, 1.f, 1.f},
+
+			{-1.f, -1.f, 1.f},
+			{-1.f, -1.f, -1.f},
+			{1.f, -1.f, -1.f},
+			{1.f, -1.f, 1.f},
+		};
+
+		std::map<int, std::vector<std::array<GxVec3, 3>> > mapTrianglesID;
+		std::unordered_map< int, std::shared_ptr<NodeObject> > Nodes = NodeFactory::getInstance()->GetAllNode();
+		for (auto it = Nodes.begin(); it != Nodes.end(); ++it)
+		{
+			//如果在点选的同时，发生节点的删除，shared_ptr引用计数为0，那么直接跳到下一个节点
+			if (it->second.use_count() == 0)
+				continue;
+
+			auto spNode = it->second;
+
+			//世界坐标
+			GxVec3 WorldVertex[8];
+			for (int i = 0; i < 8; ++i)
+			{
+				WorldVertex[i] = vertex[i] * spNode->GetBoxHalfLenth();
+				WorldVertex[i] = WorldVertex[i] * spNode->GetRotation();
+				WorldVertex[i] = WorldVertex[i] + spNode->GetPosition();
+			}
+
+			std::vector<std::array<GxVec3, 3>> vec;
+			std::array<GxVec3, 3> array;
+			{
+				//trangle-top1
+				array = { WorldVertex[0], WorldVertex[1], WorldVertex[2] };
+				vec.push_back(array);
+
+				//trangle-top2
+				array = { WorldVertex[0], WorldVertex[2], WorldVertex[3] };
+				vec.push_back(array);
+
+				//trangle-front1
+				array = { WorldVertex[0], WorldVertex[3], WorldVertex[4] };
+				vec.push_back(array);
+
+				//trangle-front2
+				array = { WorldVertex[4], WorldVertex[3], WorldVertex[7] };
+				vec.push_back(array);
+
+				//trangle-right1
+				array = { WorldVertex[7], WorldVertex[3], WorldVertex[2] };
+				vec.push_back(array);
+
+				//trangle-right2
+				array = { WorldVertex[7], WorldVertex[2], WorldVertex[6] };
+				vec.push_back(array);
+
+				//trangle-left1
+				array = { WorldVertex[4], WorldVertex[1], WorldVertex[0] };
+				vec.push_back(array);
+
+				//trangle-left2
+				array = { WorldVertex[4], WorldVertex[5], WorldVertex[1] };
+				vec.push_back(array);
+
+				//trangle-back1
+				array = { WorldVertex[5], WorldVertex[2], WorldVertex[1] };
+				vec.push_back(array);
+
+				//trangle-back2
+				array = { WorldVertex[5], WorldVertex[6], WorldVertex[2] };
+				vec.push_back(array);
+
+				//trangle-bottom1
+				array = { WorldVertex[4], WorldVertex[6], WorldVertex[5] };
+				vec.push_back(array);
+
+				//trangle-bottom2
+				array = { WorldVertex[4], WorldVertex[7], WorldVertex[6] };
+				vec.push_back(array);
+			}
+			mapTrianglesID.insert(std::make_pair(spNode->GetID(), std::move(vec)));
+		}
+
+		bool bPickup = false;
+		float fMinDistance = 0x7fffffff;	 //(float)std::numeric_limits<float>::max;
+		int nMinDistanceId;
+		for (auto itTrianglesID = mapTrianglesID.begin(); itTrianglesID != mapTrianglesID.end(); ++itTrianglesID)
+		{
+			std::vector<std::array<GxVec3, 3>> vecTriangle = itTrianglesID->second;
+			for (int i = 0; i < vecTriangle.size(); ++i)
+			{
+				std::array<GxVec3, 3> triangleArr = vecTriangle[i];
+
+				GxVec3 vTmpCross;	vTmpCross.Cross(triangleArr[0]-triangleArr[1], triangleArr[1]-triangleArr[2]);
+				
+				std::pair<bool, float> pairRet = Echo::Math::intersects(ray, GxVecToEchoVec(triangleArr[0]),
+					GxVecToEchoVec(triangleArr[1]), GxVecToEchoVec(triangleArr[2]), GxVecToEchoVec(vTmpCross));
+
+				if (pairRet.first == true)
+				{
+					bPickup = true;
+					if (pairRet.second < fMinDistance)
+					{
+						fMinDistance = pairRet.second;
+						nMinDistanceId = itTrianglesID->first;
+					}
+				}
+			}
+		}
+
+		if (bPickup == true)
+		{
+			auto wpSelectNode = NodeFactory::getInstance()->GetNode(nMinDistanceId);
+			if (!wpSelectNode.expired())
+			{
+				static int i = 0;
+				int nColor;
+				if (i % 2 == 0)
+				{
+					nColor = 0xff0000ff;
+				}
+				else
+					nColor = 0xff00ff00;
+				++i;
+
+				auto spSelectNode = wpSelectNode.lock();
+				spSelectNode->SetRenderColor(nColor);
+			}
+		}
+
+#endif
+	}
