@@ -1,0 +1,39 @@
+json写入与读取
+
+//写入
+因为项目里面不支持map数据json导出，所以层序先把数据存入可json导出的vector然后再导出数据
+
+//读取
+1.读取文件  api
+2.处理文件
+{
+//获取一行的数据
+void NodeIO::SplitContentGetChildJsonData(std::vector<std::string>& vecChildData, const std::string& szContent)
+{
+	std::string str = szContent;
+
+	const char* pBacisPos = str.c_str();
+	const char* pCurPos = pBacisPos;
+	const char* pFindPos = nullptr;
+
+	std::vector<std::string> vecStrSplit;
+	while (pFindPos = strstr(pCurPos, "\r\n"))
+	{
+		size_t offset = pCurPos - pBacisPos;
+		size_t len = pFindPos - pCurPos;
+		std::string strSplit = str.substr(offset, len);
+		vecStrSplit.push_back(strSplit);
+
+		//跳过\r\n
+		pCurPos = pFindPos + 2;
+	}
+	vecChildData = std::move(vecStrSplit);
+}
+}
+3.构建文件树
+4.刷新代码里面的map到可json导出的vec，比对操作
+  //如果程序中节点的孩子个数 > 文件中节点的孩子个数
+  //删除多余的程序中的孩子
+  
+  //现在nOriginalNodeChildNum <= nJsonNodeChildNum
+	//开始比对copy关键信息，或者增加节点
